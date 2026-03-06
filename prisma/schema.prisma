@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?   
+  email         String?   @unique 
+  emailVerified DateTime?
+  image         String?   
+  role          String    @default("USER") 
+  phone         String?   
+  phoneVerified Boolean   @default(false)
+  bio           String?
+  lineId        String?
+  whatsapp      String?
+  hideListings  Boolean   @default(false)
+  kycStatus     String    @default("UNVERIFIED") 
+  kycDocumentUrl String? 
+  accounts      Account[]
+  sessions      Session[]
+  listings      Listing[] 
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+model OtpCode {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([phone, code])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String  // จะเก็บคำว่า "line"
+  providerAccountId  String  // เก็บ LINE User ID (UID ของไลน์)
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Listing {
+  id            String   @id @default(cuid())
+  title         String   
+  description   String?  
+  price         Float    
+  location      String   
+  images        String[] 
+  size          Float    
+  bedrooms      String  
+  bathrooms     String   
+  listingType   String   
+  propertyType  String   
+  distanceToBts String?  
+  furniture     String?  
+  highlights    String[] 
+  amenities     String[] 
+  status        String   @default("DRAFT") 
+  views         Int      @default(0)        
+  clicks        Int      @default(0)        
+  lineClicks    Int      @default(0)        
+  phoneClicks   Int      @default(0)        
+  emailClicks   Int      @default(0)       
+  
+  ownerId       String
+  owner         User     @relation(fields: [ownerId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model VerificationToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email, token])
+}
